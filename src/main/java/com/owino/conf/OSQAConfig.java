@@ -68,9 +68,9 @@ public class OSQAConfig {
         var formater = DateTimeFormatter.ofPattern("yyyy-MM-dd-hh-mm-ss");
         return createdTime.format(formater) + "." + ext;
     }
-    public static Result<Void> writeSpecFile(OSQATestSpec specification, String specFile) {
+    public static Result<Void> writeSpecFile(Path appDataDir, OSQATestSpec specification, String specFile) {
         try {
-            var nameBuilder = new StringBuilder(MODULE_DIR);
+            var nameBuilder = new StringBuilder(appDataDir.toUri().getPath().toString());
             nameBuilder.append("/");
             nameBuilder.append(specFile);
             var path = Paths.get(nameBuilder.toString());
@@ -81,10 +81,10 @@ public class OSQAConfig {
             return Result.failure("Failed to write test spec file:" +ex.getLocalizedMessage());
         }
     }
-    public static Result<Path> writeModule(OSQAModule module){
+    public static Result<Path> writeModule(Path appDataDir,OSQAModule module){
         try {
             var prefix = "module";
-            var nameBuilder = new StringBuilder(MODULE_DIR);
+            var nameBuilder = new StringBuilder(appDataDir.toUri().getPath().toString());
             nameBuilder.append("/");
             nameBuilder.append(prefix);
             nameBuilder.append(module.name().replaceAll(" ",""));

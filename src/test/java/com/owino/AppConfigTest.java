@@ -154,7 +154,8 @@ public class AppConfigTest {
         var specification = new OSQATestSpec(uuid,"Launch application",List.of(verification));
         var timestamp = LocalDateTime.of(2000,11,21,10,55,30);
         var specFile = OSQAConfig.timestampedName(timestamp,"json");
-        var result = OSQAConfig.writeSpecFile(specification,specFile);
+        var result = OSQAConfig.writeSpecFile(Paths.get(OSQAConfig.MODULE_DIR),specification,specFile);
+        IO.println(result);
         assertThat(result instanceof Result.Success<Void>).isTrue();
         Files.deleteIfExists(Paths.get(specFile));
     }
@@ -163,7 +164,8 @@ public class AppConfigTest {
         var uuid = "5833312b-7c84-4e6d-a067-622eb2156761";
         var testSpec = new OSQATestCase(uuid,"testcase","specfile.json");
         var module = new OSQAModule(uuid,"Launch application","Module notes","Critical",List.of(testSpec));
-        var result = OSQAConfig.writeModule(module);
+        var result = OSQAConfig.writeModule(Paths.get(OSQAConfig.MODULE_DIR),module);
+        IO.println(result);
         assertThat(result instanceof Result.Success<Path>).isTrue();
         var path = ((Result.Success<Path>) result).value();
         assertThat(Files.exists(path)).isTrue();

@@ -17,6 +17,8 @@ package com.owino.desktop;
  */
 import com.owino.conf.OSQAConfig;
 import com.owino.core.OSQAModel;
+import com.owino.core.Result;
+import com.owino.settings.SettingDao;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
@@ -27,6 +29,8 @@ import javafx.scene.text.Text;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BorderPane;
 import tools.jackson.databind.ObjectMapper;
+
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -87,21 +91,23 @@ public class VerificationFormView extends ScrollPane {
             var testCase = new OSQAModel.OSQATestCase(UUID.randomUUID().toString(),testCaseTitle,specFile);
             var verification = new OSQAModel.OSQAVerification(0,verificationField.getText());
             var specification = new OSQAModel.OSQATestSpec(UUID.randomUUID().toString(),userActionField.getText(),List.of(verification));
-            OSQAConfig.writeSpecFile(specification,specFile);
-            testCases.add(testCase);
+            var appDirResult = SettingDao.getAppDataDir();
+            if (appDirResult instanceof Result.Success<Path>(Path appDir)){
+                OSQAConfig.writeSpecFile(appDir,specification,specFile);
+                testCases.add(testCase);
+                var moduleTitle = moduleTitleText.getText();
+                var moduleDescription = descriptionTextField.getText();
+                var module = new OSQAModel.OSQAModule(
+                        UUID.randomUUID().toString(),
+                        moduleTitle,
+                        moduleDescription,
+                        "Critical",
+                        testCases);
+                OSQAConfig.writeModule(appDir,module);
+                IO.println(new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(module));
 
-            var moduleTitle = moduleTitleText.getText();
-            var moduleDescription = descriptionTextField.getText();
-            var module = new OSQAModel.OSQAModule(
-                    UUID.randomUUID().toString(),
-                    moduleTitle,
-                    moduleDescription,
-                    "Critical",
-                    testCases);
-            OSQAConfig.writeModule(module);
-            IO.println(new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(module));
-
-            fireEvent(AppEvents.closeModuleFormEvent());
+                fireEvent(AppEvents.closeModuleFormEvent());
+            }
         });
         return formContainer;
     }
