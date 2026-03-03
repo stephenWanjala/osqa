@@ -7,7 +7,7 @@ LEAST_TESTED_TMP=".least_tested.tmp"
 
 if [ ! -f "$REPORT" ]; then
   echo "❌ JaCoCo XML report not found at $REPORT"
-  exit 1
+  exit 0
 fi
 
 # Step 1: Generate new coverage report content

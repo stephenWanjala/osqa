@@ -147,6 +147,29 @@ public class AppConfigTest {
         assertThat(actualFileName).isNotEmpty();
         assertThat(actualFileName).isEqualTo(expectedFileName);
     }
+    @Test
+    public void shouldWriteSpecFileTest() throws IOException {
+        var uuid = "5833312b-7c84-4e6d-a067-622eb2156761";
+        var verification = new OSQAVerification(0,"verification step");
+        var specification = new OSQATestSpec(uuid,"Launch application",List.of(verification));
+        var timestamp = LocalDateTime.of(2000,11,21,10,55,30);
+        var specFile = OSQAConfig.timestampedName(timestamp,"json");
+        var result = OSQAConfig.writeSpecFile(specification,specFile);
+        assertThat(result instanceof Result.Success<Void>).isTrue();
+        Files.deleteIfExists(Paths.get(specFile));
+    }
+    @Test
+    public void shouldWriteModulesConfFileTest() throws IOException {
+        var uuid = "5833312b-7c84-4e6d-a067-622eb2156761";
+        var testSpec = new OSQATestCase(uuid,"testcase","specfile.json");
+        var module = new OSQAModule(uuid,"Launch application","Module notes","Critical",List.of(testSpec));
+        var result = OSQAConfig.writeModule(module);
+        assertThat(result instanceof Result.Success<Path>).isTrue();
+        var path = ((Result.Success<Path>) result).value();
+        assertThat(Files.exists(path)).isTrue();
+        IO.println(path.getFileName());
+        Files.deleteIfExists(((Result.Success<Path>) result).value());
+    }
     @AfterEach
     public void tearDown() throws IOException {
         deleteAppDataFolder();
@@ -165,7 +188,6 @@ public class AppConfigTest {
                     });
         }
     }
-
     private final String modulesJson = """
             [
               {

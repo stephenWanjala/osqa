@@ -68,4 +68,34 @@ public class OSQAConfig {
         var formater = DateTimeFormatter.ofPattern("yyyy-MM-dd-hh-mm-ss");
         return createdTime.format(formater) + "." + ext;
     }
+    public static Result<Void> writeSpecFile(OSQATestSpec specification, String specFile) {
+        try {
+            var nameBuilder = new StringBuilder(MODULE_DIR);
+            nameBuilder.append("/");
+            nameBuilder.append(specFile);
+            var path = Paths.get(nameBuilder.toString());
+            Files.writeString(path, new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(specification));
+            if (Files.exists(path)) return Result.success(null);
+            else return Result.failure("Failed to write spec file " + specFile + ": Unknown error");
+        } catch (IOException ex){
+            return Result.failure("Failed to write test spec file:" +ex.getLocalizedMessage());
+        }
+    }
+    public static Result<Path> writeModule(OSQAModule module){
+        try {
+            var prefix = "module";
+            var nameBuilder = new StringBuilder(MODULE_DIR);
+            nameBuilder.append("/");
+            nameBuilder.append(prefix);
+            nameBuilder.append(module.name().replaceAll(" ",""));
+            nameBuilder.append(timestampedName(LocalDateTime.now(),"json"));
+            var fileName = nameBuilder.toString();
+            var path = Paths.get(fileName);
+            Files.writeString(path, new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(module));
+            if (Files.exists(path)) return Result.success(path);
+            else return Result.failure("Failed to create modules conf file: Error unknown");
+        } catch (IOException ex){
+            return Result.failure("Failed to write modules spec file:" +ex.getLocalizedMessage());
+        }
+    }
 }

@@ -1,4 +1,4 @@
-package com.owino;
+package com.owino.cli;
 /*
  * Copyright (C) 2026 Samuel Owino
  *
@@ -31,8 +31,8 @@ import com.owino.core.OSQAModel.OSQATestSpec;
 import com.owino.core.OSQAModel.OSQAOutcome;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-public class App {
-    private final Logger LOG = LoggerFactory.getLogger(App.class);
+public class AppCLI {
+    private final Logger LOG = LoggerFactory.getLogger(AppCLI.class);
     void main() {
         IO.println("""
                  _____ _____  _____  ___

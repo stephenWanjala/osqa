@@ -64,9 +64,9 @@ OSQA is not persistent, data is only collected and maintained during a QA sessio
       "title": "Pre-Test Setup and Calendar Launch",
       "category": "Setup",
       "priority": "High",
-      "user_action": "Launch the application and navigate to the In-App Custom Calendar view (Month/Week view). Ensure the system date is set to a known baseline (e.g., Monday, January 1st, 2024).",
+      "user_action": "Launch the application and navigate to the In-AppCLI Custom Calendar view (Month/Week view). Ensure the system date is set to a known baseline (e.g., Monday, January 1st, 2024).",
       "verifications": [
-        "App loads successfully with no crashes or error messages.",
+        "AppCLI loads successfully with no crashes or error messages.",
         "The custom calendar renders correctly, showing the correct month/week and dates."
       ],
       "depends_on": []
@@ -76,10 +76,10 @@ OSQA is not persistent, data is only collected and maintained during a QA sessio
       "title": "Daily Recurrence - Visual Placement on Calendar",
       "category": "Recurrence - Daily",
       "priority": "High",
-      "user_action": "Create a new task titled 'Hydrate' and set its recurrence to 'Daily,' starting on the current date (Jan 1, 2024). Then, open the In-App Calendar to the Month view for January 2024.",
+      "user_action": "Create a new task titled 'Hydrate' and set its recurrence to 'Daily,' starting on the current date (Jan 1, 2024). Then, open the In-AppCLI Calendar to the Month view for January 2024.",
       "verifications": [
         "The task is created successfully and displays a recurrence icon.",
-        "In the In-App Calendar, a task indicator for 'Hydrate' appears on January 1st.",
+        "In the In-AppCLI Calendar, a task indicator for 'Hydrate' appears on January 1st.",
         "Scroll through the month view. Verify that 'Hydrate' appears on every single day in January (Jan 2, Jan 3, Jan 4... Jan 31)."
       ],
       "depends_on": ["TC-PRE-001"]
@@ -106,7 +106,7 @@ $ cd osqa; mvn clean install ; cd target; java -jar osqa-1.0.jar
 ```
 
 <!-- coverage start -->
-## 📊 Code Coverage Report
+## Code Coverage Report
 
 **Overall Coverage: 53.79% ✅**
 
