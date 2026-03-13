@@ -15,23 +15,21 @@ package com.owino.desktop.features;
  * You should have received a copy of the GNU General Public License
  * along with OSQA.  If not, see <https://www.gnu.org/licenses/>.
  */
-import com.owino.OSQANavigationEvents;
-import com.owino.core.OSQAConfig;
-import com.owino.core.OSQAModel;
 import com.owino.core.Result;
-import com.owino.settings.SettingDao;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
-import javafx.scene.control.SelectionMode;
-import javafx.scene.layout.VBox;
-import org.greenrobot.eventbus.EventBus;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import com.owino.core.OSQAConfig;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import org.greenrobot.eventbus.EventBus;
+import com.owino.settings.SettingDao;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import com.owino.desktop.OSQANavigationEvents;
+import com.owino.core.OSQAModel.OSQAModule;
 public class FeatureListingsView extends VBox {
     public FeatureListingsView(){
         var appDirResult = SettingDao.getAppDataDir();
@@ -43,19 +41,19 @@ public class FeatureListingsView extends VBox {
             }
         };
         if (featuresDir.isPresent()) {
-            List<OSQAModel.OSQAModule> modules = switch (OSQAConfig.listModules(featuresDir.get())){
-                case Result.Success<List<OSQAModel.OSQAModule>> (List<OSQAModel.OSQAModule> modulesValue) -> modulesValue;
-                case Result.Failure<List<OSQAModel.OSQAModule>> failure -> {
+            List<OSQAModule> modules = switch (OSQAConfig.listModules(featuresDir.get())){
+                case Result.Success<List<OSQAModule>> (List<OSQAModule> modulesValue) -> modulesValue;
+                case Result.Failure<List<OSQAModule>> failure -> {
                     IO.println("Failed to load module list:" + failure.error().getLocalizedMessage());
                     yield List.of();
                 }
             };
             if (!modules.isEmpty()){
-                ObservableList<OSQAModel.OSQAModule> listViewContents = FXCollections.observableList(modules);
-                ListView<OSQAModel.OSQAModule> listView = new ListView<>(listViewContents);
+                ObservableList<OSQAModule> listViewContents = FXCollections.observableList(modules);
+                var listView = new ListView<OSQAModule>(listViewContents);
                 listView.setCellFactory(item -> new ListCell<>(){
                     @Override
-                    protected void updateItem(OSQAModel.OSQAModule module, boolean empty) {
+                    protected void updateItem(OSQAModule module, boolean empty) {
                         super.updateItem(module, empty);
                         if (empty || module == null){
                             setText("");
@@ -63,13 +61,21 @@ public class FeatureListingsView extends VBox {
                         } else {
                             var moduleItemContainer = new VBox(10);
                             var nameLabel = new Label(module.name());
-                            var ageLabel = new Label(module.description());
-                            ageLabel.setStyle("-fx-text-fill: gray;");
-                            moduleItemContainer.getChildren().addAll(nameLabel, ageLabel);
+                            var descriptionLabel = new Label(module.description());
+                            descriptionLabel.setMaxWidth(700);
+                            descriptionLabel.setWrapText(true);
+                            moduleItemContainer.getChildren().addAll(nameLabel, descriptionLabel, new Separator());
+                            VBox.setMargin(nameLabel,new Insets(12,12,3,12));
+                            VBox.setMargin(descriptionLabel,new Insets(3,12,6,12));
+                            var blueBackground = new Background(new BackgroundFill(Color.BLUE,new CornerRadii(12),Insets.EMPTY));
+                            var blackBackground = new Background(new BackgroundFill(Color.BLACK,new CornerRadii(12),Insets.EMPTY));
+                            moduleItemContainer.setOnMouseEntered(_ -> moduleItemContainer.setBackground(blueBackground));
+                            moduleItemContainer.setOnMouseExited(_ -> moduleItemContainer.setBackground(blackBackground));
                             setGraphic(moduleItemContainer);
                         }
                     }
                 });
+                listView.setBorder(Border.EMPTY);
                 var moduleSelectionModel = listView.getSelectionModel();
                 moduleSelectionModel.setSelectionMode(SelectionMode.SINGLE);
                 var moduleSelectedItemProp = moduleSelectionModel.selectedItemProperty();

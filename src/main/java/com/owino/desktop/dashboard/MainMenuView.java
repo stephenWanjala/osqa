@@ -19,8 +19,13 @@ import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
+import org.greenrobot.eventbus.EventBus;
+import com.owino.desktop.OSQANavigationEvents.OpenDashboardEvent;
+import com.owino.desktop.OSQANavigationEvents.OpenFeaturesListViewEvent;
+import com.owino.desktop.OSQANavigationEvents.ToggleShowVerificationButtonEvent;
 public class MainMenuView extends VBox {
     private static final Insets MENU_ITEM_MARGIN = new Insets(12,12,12,12);
+    private Label dashboardLabel;
     private Label productsLabel;
     private Label featuresLabel;
     private Label reportsLabel;
@@ -30,27 +35,41 @@ public class MainMenuView extends VBox {
         initView();
     }
     private void initView() {
+        dashboardLabel = new Label("Dashboard");
         productsLabel = new Label("Products");
         featuresLabel = new Label("Features");
         reportsLabel = new Label("Reports");
         setMenuItemStyle(productsLabel);
         setMenuItemStyle(featuresLabel);
         setMenuItemStyle(reportsLabel);
+        setMenuItemStyle(dashboardLabel);
+        dashboardLabel.setOnMouseClicked(_ -> {
+            unhighlightEffect(productsLabel);
+            unhighlightEffect(featuresLabel);
+            unhighlightEffect(reportsLabel);
+            EventBus.getDefault().post(new OpenDashboardEvent());
+            EventBus.getDefault().post(new ToggleShowVerificationButtonEvent(false));
+        });
         productsLabel.setOnMouseClicked(_ -> {
             highlightEffect(productsLabel);
             unhighlightEffect(featuresLabel);
             unhighlightEffect(reportsLabel);
+            EventBus.getDefault().post(new ToggleShowVerificationButtonEvent(false));
         });
         featuresLabel.setOnMouseClicked(_ -> {
             highlightEffect(featuresLabel);
             unhighlightEffect(productsLabel);
             unhighlightEffect(reportsLabel);
+            EventBus.getDefault().post(new OpenFeaturesListViewEvent());
+            EventBus.getDefault().post(new ToggleShowVerificationButtonEvent(false));
         });
         reportsLabel.setOnMouseClicked(_ -> {
             highlightEffect(reportsLabel);
             unhighlightEffect(productsLabel);
             unhighlightEffect(featuresLabel);
+            EventBus.getDefault().post(new ToggleShowVerificationButtonEvent(false));
         });
+        getChildren().add(dashboardLabel);
         getChildren().add(productsLabel);
         getChildren().add(featuresLabel);
         getChildren().add(reportsLabel);

@@ -15,17 +15,19 @@ package com.owino.desktop.dashboard;
  * You should have received a copy of the GNU General Public License
  * along with OSQA.  If not, see <https://www.gnu.org/licenses/>.
  */
-import com.owino.OSQANavigationEvents.OpenFeatureDetailedViewEvent;
-import com.owino.OSQANavigationEvents.OpenFeatureFormEvent;
-import com.owino.OSQANavigationEvents.HomeEvent;
-import com.owino.desktop.features.FeatureDetailedView;
-import com.owino.desktop.features.FeatureFormView;
+import com.owino.desktop.features.FeatureListingsView;
+import javafx.stage.Stage;
 import javafx.application.Platform;
 import javafx.geometry.Orientation;
 import javafx.scene.control.SplitPane;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
-import javafx.stage.Stage;
+import com.owino.desktop.features.FeatureFormView;
+import com.owino.desktop.features.FeatureDetailedView;
+import com.owino.desktop.OSQANavigationEvents.OpenDashboardEvent;
+import com.owino.desktop.OSQANavigationEvents.OpenFeatureFormEvent;
+import com.owino.desktop.OSQANavigationEvents.OpenFeaturesListViewEvent;
+import com.owino.desktop.OSQANavigationEvents.OpenFeatureDetailedViewEvent;
 public class DashboardView extends SplitPane {
     private final Stage stage;
     public DashboardView(Stage stage){
@@ -37,32 +39,35 @@ public class DashboardView extends SplitPane {
         getItems().add(new MainMenuView());
         getItems().add(new WelcomeView(stage));
         setOrientation(Orientation.HORIZONTAL);
-        setDividerPositions(0.1f);
+        setDividerPositions(0.05f);
         setStyle("-fx-divider-color: #cccccc; -fx-divider-width: 1;");
     }
     @Subscribe
-    public void handleHomeNavEvent(HomeEvent event){
+    public void handleHomeNavEvent(OpenDashboardEvent event){
         Platform.runLater(() -> {
-            getItems().removeFirst();
             getItems().removeLast();
-            getItems().add(new MainMenuView());
             getItems().add(new WelcomeView(stage));
+            setDividerPositions(0.05f);
         });
     }
     @Subscribe
     public void openFeatureFormEvent(OpenFeatureFormEvent event){
         Platform.runLater(() -> {
-            getItems().removeFirst();
             getItems().removeLast();
-            getItems().add(new MainMenuView());
             getItems().add(new FeatureFormView());
+            setDividerPositions(0.05f);
         });
     }
     @Subscribe
     public void openModuleDetailedViewEvent(OpenFeatureDetailedViewEvent event){
-        getItems().removeFirst();
         getItems().removeLast();
-        getItems().add(new MainMenuView());
         getItems().add(new FeatureDetailedView(event.selectedModule()));
+        setDividerPositions(0.05f);
+    }
+    @Subscribe
+    public void openFeaturesListViewEvent(OpenFeaturesListViewEvent event){
+        getItems().removeLast();
+        getItems().add(new FeatureListingsView());
+        setDividerPositions(0.05f);
     }
 }

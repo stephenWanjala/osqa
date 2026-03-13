@@ -15,7 +15,7 @@ package com.owino.desktop.dashboard;
  * You should have received a copy of the GNU General Public License
  * along with OSQA.  If not, see <https://www.gnu.org/licenses/>.
  */
-import com.owino.OSQANavigationEvents;
+import com.owino.desktop.OSQANavigationEvents;
 import com.owino.core.Result;
 import com.owino.settings.SettingDao;
 import javafx.application.Platform;

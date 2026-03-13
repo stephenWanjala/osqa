@@ -32,7 +32,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import com.owino.settings.SettingDao;
 import javafx.scene.layout.BorderPane;
-import com.owino.OSQANavigationEvents;
+import com.owino.desktop.OSQANavigationEvents;
 import org.greenrobot.eventbus.EventBus;
 import com.owino.core.OSQAModel.OSQAModule;
 import tools.jackson.databind.ObjectMapper;
@@ -65,7 +65,7 @@ public class FeatureFormView extends ScrollPane {
         header.setLeft(titleText);
         header.setRight(actionButtonsContainer);
         var saveButton = new Button("Save");
-        cancelButton.setOnAction(_ -> EventBus.getDefault().post(new OSQANavigationEvents.HomeEvent()));
+        cancelButton.setOnAction(_ -> EventBus.getDefault().post(new OSQANavigationEvents.OpenDashboardEvent()));
         var moduleDetailsContainer = new VBox();
         var moduleTitleText = new Text("Name");
         moduleTitleTextField = new TextField();
@@ -123,7 +123,7 @@ public class FeatureFormView extends ScrollPane {
                 successAlert.getButtonTypes().add(ButtonType.OK);
                 if (successAlert.showAndWait().isPresent()){
                     successAlert.close();
-                    EventBus.getDefault().post(new OSQANavigationEvents.HomeEvent());
+                    EventBus.getDefault().post(new OSQANavigationEvents.OpenDashboardEvent());
                 }
             }
         });

@@ -17,34 +17,41 @@ package com.owino.desktop.features;
  */
 import java.nio.file.Path;
 import java.util.Optional;
-import com.owino.OSQANavigationEvents;
 import com.owino.core.Result;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
-import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Border;
 import javafx.scene.text.Font;
-import com.owino.core.OSQAModel;
 import javafx.scene.layout.VBox;
 import com.owino.core.OSQAConfig;
 import com.owino.settings.SettingDao;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.EventBus;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import com.owino.core.OSQAModel.OSQAModule;
 import com.owino.core.OSQAModel.OSQATestSpec;
 import com.owino.core.OSQAModel.OSQATestCase;
-import org.greenrobot.eventbus.EventBus;
+import com.owino.desktop.OSQANavigationEvents;
+import com.owino.core.OSQAModel.OSQAVerification;
+import com.owino.desktop.OSQANavigationEvents.ShowVerificationFormEvent;
+import com.owino.desktop.OSQANavigationEvents.ToggleShowVerificationButtonEvent;
 public class FeatureDetailedView extends VBox {
     public static final Insets MARGIN = new Insets(8,22,8,22);
-    public FeatureDetailedView(OSQAModule module){
+    private ListView<OSQAVerification> verificationsListView;
+    private final OSQAModule feature;
+    private OSQATestSpec testSpec;
+    private OSQATestCase testCase;
+    public FeatureDetailedView(OSQAModule feature){
+        this.feature = feature;
         var moduleTitleLabel = new Label();
         var moduleDescriptionLabel = new Label();
-        moduleTitleLabel.setText(module.name());
-        moduleDescriptionLabel.setText(module.description());
+        moduleTitleLabel.setText(this.feature.name());
+        moduleDescriptionLabel.setText(this.feature.description());
+        moduleDescriptionLabel.setWrapText(true);
         moduleTitleLabel.setFont(Font.font(47));
         moduleTitleLabel.setFont(Font.font(15));
-        var testCases = module.testCases();
-        ObservableList<OSQATestCase> testCasesList = FXCollections.observableList(testCases);
-        ListView<OSQATestCase> testCaseListView = new ListView<>(testCasesList);
+        var testCases = this.feature.testCases();
         Optional<Path> appDirOptional = switch (SettingDao.getAppDataDir()){
             case Result.Success<Path> (Path path) -> Optional.of(path);
             case Result.Failure<Path> failure -> {
@@ -53,89 +60,78 @@ public class FeatureDetailedView extends VBox {
             }
         };
         if (appDirOptional.isPresent()){
-            testCaseListView.setCellFactory(item -> new ListCell<>(){
-                @Override
-                protected void updateItem(OSQATestCase testCase, boolean empty) {
-                    super.updateItem(testCase, empty);
-                    if (empty || testCase == null){
-                        setText("");
-                        setGraphic(null);
-                    } else {
-                        Optional<OSQATestSpec> optionalTestSpect = switch (OSQAConfig.loadTestCaseSpec(testCase)){
-                            case Result.Success<OSQATestSpec> (OSQATestSpec testSpec) -> Optional.of(testSpec);
-                            case Result.Failure<OSQATestSpec> failure -> {
-                                IO.println("Failed to load test spec for test case " + testCase.title() + " " + failure.error().getLocalizedMessage());
-                                yield Optional.empty();
-                            }
-                        };
-                        if (optionalTestSpect.isEmpty()){
+            testCase = testCases.getFirst();
+            Optional<OSQATestSpec> optionalTestSpect = switch (OSQAConfig.loadTestCaseSpec(testCase)){
+                case Result.Success<OSQATestSpec> (OSQATestSpec testSpec) -> Optional.of(testSpec);
+                case Result.Failure<OSQATestSpec> failure -> {
+                    IO.println("Failed to load test spec for test case " + testCase.title() + " " + failure.error().getLocalizedMessage());
+                    yield Optional.empty();
+                }
+            };
+            if (optionalTestSpect.isPresent()){
+                testSpec = optionalTestSpect.get();
+                var verifications = testSpec.verifications();
+                ObservableList<OSQAVerification> verificationsList = FXCollections.observableList(verifications);
+                verificationsListView = new ListView<>(verificationsList);
+                verificationsListView.setCellFactory(_ -> new ListCell<>(){
+                    @Override
+                    protected void updateItem(OSQAVerification verification, boolean empty) {
+                        super.updateItem(verification, empty);
+                        if (empty || verification == null){
                             setText("");
                             setGraphic(null);
                         } else {
-                            var testSpec = optionalTestSpect.get();
                             var container = new VBox();
-                            container.getChildren().add(new Label(testSpec.action()));
-                            for (OSQAModel.OSQAVerification verification : testSpec.verifications()) {
-                                var listContainer = new BorderPane();
-                                listContainer.setLeft(new Label(verification.description()));
-                                var checkbox = new CheckBox();
-                                checkbox.setSelected(verification.order() == 1);
-                                listContainer.setRight(checkbox);
-                                container.getChildren().add(listContainer);
-                                VBox.setMargin(listContainer,MARGIN);
-                            }
+                            var checkbox = new CheckBox(verification.description());
+                            checkbox.setSelected(verification.order() == 1);
+                            checkbox.setWrapText(true);
+                            container.getChildren().add(checkbox);
+                            VBox.setMargin(checkbox,MARGIN);
                             setGraphic(container);
                         }
-
                     }
-                }
-            });
-        }
-        var addTestCaseButton = new Button("Add Test Case");
-        addTestCaseButton.setOnAction(event -> {
-            var dialog = new FeatureVerificationForm();
-            Optional<String> inputResult = dialog.showAndWait();
-            if (inputResult.isPresent()){
-                var verificationDesc = inputResult.get();
-                var newVerification = new OSQAModel.OSQAVerification(0,verificationDesc);
-                var firstTestCase = testCases.getFirst();
-                Optional<OSQATestSpec> optionalTestSpect = switch (OSQAConfig.loadTestCaseSpec(firstTestCase)){
-                    case Result.Success<OSQATestSpec> (OSQATestSpec testSpec) -> Optional.of(testSpec);
-                    case Result.Failure<OSQATestSpec> failure -> {
-                        IO.println("Failed to load test spec for test case " + firstTestCase.title() + " " + failure.error().getLocalizedMessage());
-                        yield Optional.empty();
-                    }
-                };
-                if (optionalTestSpect.isPresent()){
-                    var verifications = optionalTestSpect.get().verifications();
-                    verifications.add(newVerification);
-                    var updatedTestSpec = new OSQATestSpec(optionalTestSpect.get().uuid(),optionalTestSpect.get().action(),verifications);
-                    Result<Void> overwriteResult = OSQAConfig.overwriteSpecFile(updatedTestSpec,testCases.getFirst());
-                    switch (overwriteResult){
-                        case Result.Success<Void> _ -> {
-                            var alert = new Alert(Alert.AlertType.INFORMATION);
-                            alert.setHeaderText("Verifications for this test have been updated successfully!");
-                            var dialogResult = alert.showAndWait();
-                            if (dialogResult.isPresent()){
-                                EventBus.getDefault().post(new OSQANavigationEvents.OpenFeatureDetailedViewEvent(module));
-                            }
-                        }
-                        case Result.Failure<Void> failure -> {
-                            var alert = new Alert(Alert.AlertType.ERROR);
-                            alert.setHeaderText("Failed to add this verification, an error occurred!");
-                            alert.setContentText("Cause: " + failure.error().getLocalizedMessage());
-                            alert.show();
-                        }
-                    }
-                }
-
+                });
+                verificationsListView.setBorder(Border.EMPTY);
             }
-        });
+        }
         getChildren().add(moduleTitleLabel);
         getChildren().add(moduleDescriptionLabel);
-        getChildren().add(testCaseListView);
-        getChildren().add(addTestCaseButton);
+        if (verificationsListView != null)
+            getChildren().add(verificationsListView);
         VBox.setMargin(moduleTitleLabel,MARGIN);
         VBox.setMargin(moduleDescriptionLabel,MARGIN);
+        EventBus.getDefault().register(this);
+        EventBus.getDefault().post(new ToggleShowVerificationButtonEvent(true));
+    }
+    @Subscribe
+    public void showNewVerificationFormEvent(ShowVerificationFormEvent event){
+        var dialog = new FeatureVerificationForm();
+        Optional<String> inputResult = dialog.showAndWait();
+        if (inputResult.isPresent()){
+            var verificationDesc = inputResult.get();
+            var newVerification = new OSQAVerification(0,verificationDesc);
+            if (testSpec != null){
+                var verifications = testSpec.verifications();
+                verifications.add(newVerification);
+                var updatedTestSpec = new OSQATestSpec(testSpec.uuid(),testSpec.action(),verifications);
+                Result<Void> overwriteResult = OSQAConfig.overwriteSpecFile(updatedTestSpec,testCase);
+                switch (overwriteResult){
+                    case Result.Success<Void> _ -> {
+                        var alert = new Alert(Alert.AlertType.NONE);
+                        alert.setHeaderText("Verifications for this test have been updated successfully!");
+                        var dialogResult = alert.showAndWait();
+                        if (dialogResult.isPresent()){
+                            EventBus.getDefault().post(new OSQANavigationEvents.OpenFeatureDetailedViewEvent(feature));
+                        }
+                    }
+                    case Result.Failure<Void> failure -> {
+                        var alert = new Alert(Alert.AlertType.ERROR);
+                        alert.setHeaderText("Failed to add this verification, an error occurred!");
+                        alert.setContentText("Cause: " + failure.error().getLocalizedMessage());
+                        alert.show();
+                    }
+                }
+            }
+        }
     }
 }

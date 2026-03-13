@@ -37,8 +37,8 @@ public class AppGUI extends Application {
         VBox.setVgrow(dashboard, Priority.ALWAYS);
         var scene = new Scene(mainAppWindow);
         stage.setScene(scene);
-        stage.setMinHeight(800);
-        stage.setMinWidth(1000);
+        stage.setMinHeight(900);
+        stage.setMinWidth(1200);
         stage.setTitle("OSQA");
         stage.setFullScreen(false);
         stage.show();

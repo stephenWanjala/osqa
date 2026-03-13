@@ -1,4 +1,4 @@
-package com.owino;
+package com.owino.desktop;
 /*
  * Copyright (C) 2026 Samuel Owino
  *
@@ -19,12 +19,15 @@ import com.owino.core.OSQAModel.OSQAModule;
 import java.nio.file.Path;
 import java.util.UUID;
 public sealed interface OSQANavigationEvents {
-    record HomeEvent() implements OSQANavigationEvents {}
+    record OpenDashboardEvent() implements OSQANavigationEvents {}
     record AppDirEvent(Path appDir) implements OSQANavigationEvents {}
     record OpenFeatureFormEvent(String featureUuid,boolean isEditMode) implements OSQANavigationEvents {
         public OpenFeatureFormEvent(){
             this(UUID.randomUUID().toString(),false);
         }
     }
-    record OpenFeatureDetailedViewEvent(OSQAModule selectedModule) implements OSQANavigationEvents{ }
+    record OpenFeatureDetailedViewEvent(OSQAModule selectedModule) implements OSQANavigationEvents {}
+    record OpenFeaturesListViewEvent() implements OSQANavigationEvents {}
+    record ToggleShowVerificationButtonEvent(boolean show) implements OSQANavigationEvents {}
+    record ShowVerificationFormEvent() implements OSQANavigationEvents {}
 }
