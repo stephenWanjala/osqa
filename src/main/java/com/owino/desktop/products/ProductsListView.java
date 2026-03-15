@@ -18,13 +18,10 @@ package com.owino.desktop.products;
 import java.util.List;
 import com.owino.core.Result;
 import javafx.application.Platform;
-import javafx.scene.control.Alert;
+import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.geometry.Insets;
 import javafx.scene.paint.Color;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.text.Font;
@@ -42,7 +39,7 @@ public class ProductsListView extends VBox{
         var titleLabel = new Label("Products");
         titleLabel.setFont(Font.font(21));
         var productsListView = new ListView<>(productObservableList);
-        productsListView.setCellFactory(item -> new ListCell<>(){
+        productsListView.setCellFactory(_ -> new ListCell<>(){
             @Override
             protected void updateItem(OSQAProduct item, boolean empty) {
                 super.updateItem(item, empty);
@@ -62,13 +59,14 @@ public class ProductsListView extends VBox{
                     detailedContainer.getChildren().add(dirLabel);
                     container.getChildren().add(nameLabel);
                     container.getChildren().add(detailedContainer);
-                    var blueBackground = new Background(new BackgroundFill(Color.BLUE,new CornerRadii(12), Insets.EMPTY));
-                    var blackBackground = new Background(new BackgroundFill(Color.BLACK,new CornerRadii(12),Insets.EMPTY));
+                    container.getChildren().add(new Separator());
+                    var blueBackground = new Background(new BackgroundFill(Color.BLUE,new CornerRadii(12), new Insets(6,0,6,0)));
+                    var blackBackground = new Background(new BackgroundFill(Color.BLACK,new CornerRadii(12), new Insets(6,0,6,0)));
                     container.setOnMouseEntered(_ -> container.setBackground(blueBackground));
                     container.setOnMouseExited(_ -> container.setBackground(blackBackground));
                     container.setBackground(blackBackground);
-                    VBox.setMargin(nameLabel, new Insets(12));
-                    VBox.setMargin(detailedContainer, new Insets(12));
+                    VBox.setMargin(nameLabel, new Insets(12,12,6,12));
+                    VBox.setMargin(detailedContainer, new Insets(6,12,12,12));
                     setGraphic(container);
                 }
             }

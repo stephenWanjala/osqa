@@ -40,9 +40,9 @@ public class WelcomeView extends StackPane {
                 
                 Welcome to OSQA!
                 """;
-        VBox itemsContainer = new VBox(22);
+        VBox itemsContainer = new VBox(12);
         var ascii = new Text(welcomeAscii);
-        ascii.setFont(Font.font(25));
+        ascii.setFont(Font.font(21));
         ascii.setFill(Color.BLUE);
         itemsContainer.getChildren().add(ascii);
         Button createProductButton = new Button("Register Software Product");

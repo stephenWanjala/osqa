@@ -36,7 +36,17 @@ public class AppToolbar extends BorderPane {
     private final Button addVerificationButton;
     private final Button resetVerificationButton;
     public AppToolbar(){
-        var brandLabel = new Label("OSQA");
+        var welcomeAscii = """
+                 _____ _____  _____  ___
+                |  _  /  ___||  _  |/ _ \\
+                | | | \\ `--. | | | / /_\\ \\
+                | | | |`--. \\| | | |  _  |
+                \\ \\_/ /\\__/ /\\ \\/' / | | |
+                 \\___/\\____/  \\_/\\_\\_| |_/
+                """;
+        var brandLabel = new Label(welcomeAscii);
+        brandLabel.setFont(Font.font(4));
+        brandLabel.setMaxHeight(22);
         addVerificationButton = new Button("New Verification");
         var addFeatureButton = new Button("New Feature");
         var homeButton = new Button("Home");

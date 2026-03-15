@@ -66,15 +66,30 @@ public class FeatureListingsView extends VBox {
                     setGraphic(null);
                 } else {
                     var featureItemContainer = new VBox(10);
+                    var topSection = new BorderPane();
                     var nameLabel = new Label(feature.name());
+                    switch (OSQAConfig.calculateFeatureVerificationProgress(feature)){
+                        case Result.Success<Long> (Long progress) -> {
+                            var verificationStatusLabel = new Label("Verification " + progress + "%");
+                            var verificationStatusBackground = new Background(new BackgroundFill(Color.GREEN, new CornerRadii(12),new Insets(12)));
+                            verificationStatusLabel.setTextFill(Color.WHITE);
+                            verificationStatusLabel.setBackground(verificationStatusBackground);
+                            verificationStatusLabel.setFont(Font.font(17));
+                            topSection.setRight(verificationStatusLabel);
+                        }
+                        case Result.Failure<Long> failure -> IO.println("Failed to load verification progress: " + failure.error().getLocalizedMessage());
+                    }
+
+                    nameLabel.setFont(Font.font(20));
+                    topSection.setLeft(nameLabel);
                     var descriptionLabel = new Label(feature.description());
                     descriptionLabel.setMaxWidth(700);
                     descriptionLabel.setWrapText(true);
-                    featureItemContainer.getChildren().addAll(nameLabel, descriptionLabel, new Separator());
-                    VBox.setMargin(nameLabel,new Insets(12,12,3,12));
+                    featureItemContainer.getChildren().addAll(topSection, descriptionLabel, new Separator());
+                    VBox.setMargin(topSection,new Insets(12,12,3,12));
                     VBox.setMargin(descriptionLabel,new Insets(3,12,6,12));
-                    var blueBackground = new Background(new BackgroundFill(Color.BLUE,new CornerRadii(12),Insets.EMPTY));
-                    var blackBackground = new Background(new BackgroundFill(Color.BLACK,new CornerRadii(12),Insets.EMPTY));
+                    var blueBackground = new Background(new BackgroundFill(Color.BLUE,new CornerRadii(12), new Insets(6,0,6,0)));
+                    var blackBackground = new Background(new BackgroundFill(Color.BLACK,new CornerRadii(12), new Insets(6,0,6,0)));
                     featureItemContainer.setOnMouseEntered(_ -> featureItemContainer.setBackground(blueBackground));
                     featureItemContainer.setOnMouseExited(_ -> featureItemContainer.setBackground(blackBackground));
                     setGraphic(featureItemContainer);

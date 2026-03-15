@@ -25,6 +25,8 @@ import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.nio.file.StandardOpenOption;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
+
 import com.owino.core.OSQAModel.OSQAFeature;
 import tools.jackson.databind.ObjectMapper;
 import com.owino.core.OSQAModel.OSQATestCase;
@@ -158,5 +160,21 @@ public class OSQAConfig {
             case Result.Success<Void> _ -> loadTestCaseSpec(parentTestCase);
             case Result.Failure<Void> failure -> Result.failure(failure.error().getLocalizedMessage());
         };
+    }
+    public static Result<Long> calculateFeatureVerificationProgress(OSQAFeature feature) {
+        var testCase = feature.testCases().getFirst();
+        Optional<OSQATestSpec> optionalTestSpec = switch (OSQAConfig.loadTestCaseSpec(testCase)){
+            case Result.Success<OSQATestSpec> (OSQATestSpec spec) -> Optional.of(spec);
+            case Result.Failure<OSQATestSpec> failure -> {
+                IO.println(failure.error().getLocalizedMessage());
+                yield Optional.empty();
+            }
+        };
+        if (optionalTestSpec.isEmpty()) return Result.failure("Failed to calculate verification status, missing test spec");
+        var testSpec = optionalTestSpec.get();
+        var completedCount = (double) testSpec.verifications().stream().filter(OSQAVerification::verificationStatus).count();
+        var total = (double) testSpec.verifications().size();
+        var progress = (long) ((completedCount / total) * 100.0);
+        return Result.success(progress);
     }
 }

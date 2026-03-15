@@ -30,7 +30,6 @@ public class MainMenuView extends VBox {
     private Label dashboardLabel;
     private Label productsLabel;
     private Label featuresLabel;
-    private Label reportsLabel;
     public MainMenuView(){
         setMinWidth(200);
         setMaxWidth(300);
@@ -40,44 +39,32 @@ public class MainMenuView extends VBox {
         dashboardLabel = new Label("Dashboard");
         productsLabel = new Label("Products");
         featuresLabel = new Label("Features");
-        reportsLabel = new Label("Reports");
         setMenuItemStyle(productsLabel);
         setMenuItemStyle(featuresLabel);
-        setMenuItemStyle(reportsLabel);
         setMenuItemStyle(dashboardLabel);
         dashboardLabel.setOnMouseClicked(_ -> {
             unhighlightEffect(productsLabel);
             unhighlightEffect(featuresLabel);
-            unhighlightEffect(reportsLabel);
             EventBus.getDefault().post(new OpenDashboardEvent());
             EventBus.getDefault().post(new ToggleShowVerificationButtonEvent(false));
         });
         productsLabel.setOnMouseClicked(_ -> {
             highlightEffect(productsLabel);
             unhighlightEffect(featuresLabel);
-            unhighlightEffect(reportsLabel);
             EventBus.getDefault().post(new ToggleShowVerificationButtonEvent(false));
             EventBus.getDefault().post(new OpenProductsListEvent());
         });
         featuresLabel.setOnMouseClicked(_ -> {
             highlightEffect(featuresLabel);
             unhighlightEffect(productsLabel);
-            unhighlightEffect(reportsLabel);
             EventBus.getDefault().post(new ToggleShowVerificationButtonEvent(false));
             var productSelectDialog = new ProductSelectionDialog();
             var result = productSelectDialog.showAndWait();
             result.ifPresent(selectedProduct -> EventBus.getDefault().post(new OpenFeaturesListViewEvent(selectedProduct)));
         });
-        reportsLabel.setOnMouseClicked(_ -> {
-            highlightEffect(reportsLabel);
-            unhighlightEffect(productsLabel);
-            unhighlightEffect(featuresLabel);
-            EventBus.getDefault().post(new ToggleShowVerificationButtonEvent(false));
-        });
         getChildren().add(dashboardLabel);
         getChildren().add(productsLabel);
         getChildren().add(featuresLabel);
-        getChildren().add(reportsLabel);
     }
     private void setMenuItemStyle(Label menuItem){
         menuItem.setFont(Font.font(17));

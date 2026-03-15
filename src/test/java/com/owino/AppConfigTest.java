@@ -309,6 +309,31 @@ public class AppConfigTest {
         assertThat(secondVerification.description()).isEqualTo(verificationStep2.description());
         assertThat(secondVerification.verificationStatus()).isEqualTo(verificationStep2.verificationStatus());
     }
+    @Test
+    public void shouldCalculateFeatureVerificationProgress() throws IOException{
+        var verifications = List.of(
+                new OSQAVerification("54df4e30-b691-4ebb-93a2-a294a10b49ea",0,"verification step 1",false),
+                new OSQAVerification("2e88a797-7017-40cb-887b-498902880482",0,"verification step 2",false),
+                new OSQAVerification("0cd7bc7d-e11e-49ad-b4ad-444978ef93aa",0,"verification step 3",false),
+                new OSQAVerification("5f6a8fa4-9f80-4b9e-9474-f308705f378c",0,"verification step 4",true)
+        );
+        var specification = new OSQATestSpec("6321e37d-b049-4d0f-8d50-3e7e10bef317","Launch application",verifications);
+        var timestamp = LocalDateTime.of(2000,11,21,10,55,30);
+        var specFile = OSQAConfig.timestampedName(timestamp,"json");
+        var result = OSQAConfig.writeSpecFile(Paths.get(OSQAConfig.MODULE_DIR),specification,specFile);
+        assertThat(result instanceof Result.Success<Void>).isTrue();
+        var testCase = new OSQATestCase("b37c79fd-a803-4c83-953d-1240af36960a","Test Case",OSQAConfig.MODULE_DIR + "/" + specFile);
+        var feature = new OSQAFeature(
+                "9f8fcf88-fb9e-4b62-88f0-30a77b2883a3",
+                "e18b9af0-f984-4dd3-9174-782b2c70033a",
+                "Feature Name","Feature description","HIGH",
+                List.of(testCase));
+        var actualCompletionCount = OSQAConfig.calculateFeatureVerificationProgress(feature);
+        var expectedCompletion = 25;
+        assertThat(actualCompletionCount).isGreaterThan(0);
+        assertThat(actualCompletionCount).isEqualTo(expectedCompletion);
+        Files.deleteIfExists(Paths.get(specFile));
+    }
     @AfterEach
     public void tearDown() throws IOException {
         deleteAppDataFolder();
