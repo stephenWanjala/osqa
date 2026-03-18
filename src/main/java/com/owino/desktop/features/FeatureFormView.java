@@ -75,20 +75,27 @@ public class FeatureFormView extends ScrollPane {
         var formContainer = new VBox();
         var header = new BorderPane();
         var titleText = new Text("New Feature");
-        titleText.setFont(Font.font(21));
+        var testCaseFormContainer = new VBox();
+        var separator = new Separator();
+        var userActionTitle = new Text("Usage instructions");
         var actionButtonsContainer = new HBox(22);
         var cancelButton = new Button("Cancel");
-        actionButtonsContainer.getChildren().add(cancelButton);
-        header.setLeft(titleText);
-        header.setRight(actionButtonsContainer);
-        var saveButton = new Button("Save");
-        cancelButton.setOnAction(_ -> EventBus.getDefault().post(new OSQANavigationEvents.OpenDashboardEvent()));
         var featureDetailsContainer = new VBox();
         var productTitleLabel = new Label("Product");
         var featureTitleText = new Text("Name");
         featureTitleTextField = new TextField();
         var descriptionText = new Text("Description");
         descriptionTextField = new TextField();
+        usageInstructionsTextArea = new TextArea();
+        var verificationsContainer = new BorderPane();
+        var verificationLabel = new Text("Verifications:");
+        var addVerificationButton = new Button("Add Verification");
+        actionButtonsContainer.getChildren().add(cancelButton);
+        titleText.setFont(Font.font(21));
+        header.setLeft(titleText);
+        header.setRight(actionButtonsContainer);
+        var saveButton = new Button("Save");
+        cancelButton.setOnAction(_ -> EventBus.getDefault().post(new OSQANavigationEvents.OpenDashboardEvent()));
         productComboBox.setMinWidth(900);
         productTitleLabel.setFont(FORM_LABEL_FONT);
         featureTitleText.setFont(FORM_LABEL_FONT);
@@ -113,11 +120,6 @@ public class FeatureFormView extends ScrollPane {
         VBox.setMargin(featureDetailsContainer,MARGIN);
         actionButtonsContainer.getChildren().add(saveButton);
         VBox.setMargin(saveButton,MARGIN);
-
-        var testCaseFormContainer = new VBox();
-        var separator = new Separator();
-        var userActionTitle = new Text("Usage instructions");
-        usageInstructionsTextArea = new TextArea();
         userActionTitle.setFont(FORM_LABEL_FONT);
         usageInstructionsTextArea.setFont(Font.font(15));
         testCaseFormContainer.getChildren().add(userActionTitle);
@@ -127,9 +129,6 @@ public class FeatureFormView extends ScrollPane {
         VBox.setMargin(usageInstructionsTextArea,FIELD_MARGIN);
         formContainer.getChildren().add(testCaseFormContainer);
         VBox.setMargin(testCaseFormContainer,MARGIN);
-        var verificationsContainer = new BorderPane();
-        var verificationLabel = new Text("Verifications:");
-        var addVerificationButton = new Button("Add Verification");
         verificationsContainer.setLeft(verificationLabel);
         verificationsContainer.setRight(addVerificationButton);
         verificationsContainer.setBottom(verificationListContainer);
@@ -138,7 +137,7 @@ public class FeatureFormView extends ScrollPane {
         testCaseFormContainer.getChildren().add(verificationsContainer);
         testCaseFormContainer.setStyle(CSS.FORM_SECTION_BORDER);
         addVerificationButton.setOnAction(_ -> {
-            Optional<String> inputResult = new FeatureVerificationForm().showAndWait();
+            Optional<String> inputResult = new FeatureVerificationForm(null,false).showAndWait();
             if (inputResult.isPresent()){
                 if (!inputResult.get().isBlank()){
                     verificationsList.add( new OSQAVerification(UUID.randomUUID().toString(),0,inputResult.get()));
@@ -187,11 +186,9 @@ public class FeatureFormView extends ScrollPane {
                     var contentContainer = new BorderPane();
                     var verificationCheckbox = new CheckBox(verification.description());
                     var deleteButton = new Button("Delete");
-                    var editButton = new Button("Edit");
                     deleteButton.setTextFill(Color.RED);
                     deleteButton.setFont(Font.font(12));
-                    editButton.setFont(Font.font(12));
-                    buttonsContainer.getChildren().addAll(deleteButton,editButton);
+                    buttonsContainer.getChildren().addAll(deleteButton);
                     verificationCheckbox.setSelected(verification.verificationStatus());
                     verificationCheckbox.setWrapText(true);
                     verificationCheckbox.selectedProperty().addListener((observableValue,_,newVerifiedStatus) -> {
@@ -199,7 +196,6 @@ public class FeatureFormView extends ScrollPane {
                         switch (OSQAConfig.updateVerificationStatus(testSpec,testCase,updatedVerification)){
                             case Result.Success<OSQATestSpec> (OSQATestSpec updatedTestSpec) -> {
                                 testSpec = updatedTestSpec;
-                                //reloadVerifications();
                             }
                             case Result.Failure<OSQATestSpec> failure -> {
                                 var alert = new Alert(Alert.AlertType.INFORMATION);

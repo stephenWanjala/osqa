@@ -17,6 +17,7 @@ package com.owino.desktop;
  */
 import com.owino.core.OSQAModel.OSQAProduct;
 import com.owino.core.OSQAModel.OSQAFeature;
+import com.owino.core.OSQAModel.OSQAVerification;
 public sealed interface OSQANavigationEvents {
     record OpenDashboardEvent() implements OSQANavigationEvents {}
     record OpenFeatureFormEvent(OSQAFeature feature,boolean isEditMode) implements OSQANavigationEvents {
@@ -27,7 +28,9 @@ public sealed interface OSQANavigationEvents {
     record OpenFeatureDetailedViewEvent(OSQAFeature selectedFeature, OSQAProduct product) implements OSQANavigationEvents {}
     record OpenFeaturesListViewEvent(OSQAProduct selectedProduct) implements OSQANavigationEvents {}
     record ToggleShowVerificationButtonEvent(boolean show) implements OSQANavigationEvents {}
-    record ShowVerificationFormEvent() implements OSQANavigationEvents {}
+    record ShowVerificationFormEvent(OSQAVerification verification, boolean isEditMode) implements OSQANavigationEvents {
+        public ShowVerificationFormEvent(){this(null,false);}
+    }
     record ResetVerificationsEvent() implements  OSQANavigationEvents {}
     record OpenProductFormEvent(boolean isEditMode,OSQAProduct product) implements  OSQANavigationEvents {
         public OpenProductFormEvent(){this(false, null);}

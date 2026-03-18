@@ -109,6 +109,7 @@ public class FeatureDetailedView extends VBox {
                             }
                         });
                         deleteButton.setOnAction(_ -> deleteVerification(verification));
+                        editButton.setOnAction(_ -> EventBus.getDefault().post(new ShowVerificationFormEvent(verification,true)));
                         contentContainer.setLeft(verificationCheckbox);
                         contentContainer.setRight(buttonsContainer);
                         container.getChildren().add(contentContainer);
@@ -149,23 +150,44 @@ public class FeatureDetailedView extends VBox {
     }
     @Subscribe
     public void showNewVerificationFormEvent(ShowVerificationFormEvent event){
-        var dialog = new FeatureVerificationForm();
+        var dialog = new FeatureVerificationForm(event.verification(),event.isEditMode());
         Optional<String> inputResult = dialog.showAndWait();
         if (inputResult.isPresent()){
             var verificationDesc = inputResult.get();
-            var newVerification = new OSQAVerification(UUID.randomUUID().toString(),0,verificationDesc,false);
-            if (testSpec != null){
-                var verifications = testSpec.verifications();
-                verifications.add(newVerification);
-                var updatedTestSpec = new OSQATestSpec(testSpec.uuid(),testSpec.action(),verifications);
-                Result<Void> overwriteResult = OSQAConfig.overwriteSpecFile(updatedTestSpec,testCase);
-                switch (overwriteResult){
-                    case Result.Success<Void> _ -> reloadVerifications();
-                    case Result.Failure<Void> failure -> {
-                        var alert = new Alert(Alert.AlertType.ERROR);
-                        alert.setHeaderText("Failed to add this verification, an error occurred!");
-                        alert.setContentText("Cause: " + failure.error().getLocalizedMessage());
-                        alert.show();
+            if (event.isEditMode()){
+                var existingVerification = event.verification();
+                var updatedVerification = new OSQAVerification(existingVerification.uuid(),existingVerification.order(),inputResult.get(),existingVerification.verificationStatus());
+                if (testSpec != null){
+                    var verifications = testSpec.verifications();
+                    verifications.removeIf(e -> e.uuid().equalsIgnoreCase(existingVerification.uuid()));
+                    verifications.add(updatedVerification);
+                    var updatedTestSpec = new OSQATestSpec(testSpec.uuid(),testSpec.action(),verifications);
+                    Result<Void> overwriteResult = OSQAConfig.overwriteSpecFile(updatedTestSpec,testCase);
+                    switch (overwriteResult){
+                        case Result.Success<Void> _ -> reloadVerifications();
+                        case Result.Failure<Void> failure -> {
+                            var alert = new Alert(Alert.AlertType.ERROR);
+                            alert.setHeaderText("Failed to add this verification, an error occurred!");
+                            alert.setContentText("Cause: " + failure.error().getLocalizedMessage());
+                            alert.show();
+                        }
+                    }
+                }
+            } else {
+                var verification = new OSQAVerification(UUID.randomUUID().toString(),0,verificationDesc,false);
+                if (testSpec != null){
+                    var verifications = testSpec.verifications();
+                    verifications.add(verification);
+                    var updatedTestSpec = new OSQATestSpec(testSpec.uuid(),testSpec.action(),verifications);
+                    Result<Void> overwriteResult = OSQAConfig.overwriteSpecFile(updatedTestSpec,testCase);
+                    switch (overwriteResult){
+                        case Result.Success<Void> _ -> reloadVerifications();
+                        case Result.Failure<Void> failure -> {
+                            var alert = new Alert(Alert.AlertType.ERROR);
+                            alert.setHeaderText("Failed to add this verification, an error occurred!");
+                            alert.setContentText("Cause: " + failure.error().getLocalizedMessage());
+                            alert.show();
+                        }
                     }
                 }
             }

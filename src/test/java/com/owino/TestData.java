@@ -15,8 +15,8 @@ package com.owino;
  * You should have received a copy of the GNU General Public License
  * along with OSQA.  If not, see <https://www.gnu.org/licenses/>.
  */
-import com.owino.core.OSQAModel;
 import java.util.List;
+import com.owino.core.OSQAModel;
 public class TestData {
     public static final List<OSQAModel.OSQAFeature> featureOptions = List.of(
             new OSQAModel.OSQAFeature(
