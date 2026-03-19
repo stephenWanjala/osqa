@@ -1,0 +1,186 @@
+name: Multi-Platform Binary Generation
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  pull_request:
+    branches: [ "master", "main" ]
+  release:
+    types: [ "published" ]
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: true
+        default: 'release'
+        type: choice
+        options:
+          - release
+          - snapshot
+
+env:
+  JAVA_VERSION: '25'
+  MAVEN_OPTS: '-Xmx2g'
+
+jobs:
+  build-matrix:
+    name: Build for ${{ matrix.os }} (${{ matrix.arch }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            arch: x86_64
+            artifact_name: osqa
+            package_type: dmg
+          - os: macos-latest
+            arch: arm64
+            artifact_name: osqa
+            package_type: dmg
+    
+          - os: windows-latest
+            arch: x86_64
+            artifact_name: osqa.exe
+            package_type: msi
+    
+          - os: ubuntu-latest
+            arch: x86_64
+            artifact_name: osqa
+            package_type: deb
+            
+          - os: ubuntu-latest
+            arch: arm64
+            artifact_name: osqa
+            package_type: deb
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up JDK ${{ env.JAVA_VERSION }}
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Set up Maven
+      uses: stCarolas/setup-maven@v5
+      with:
+        maven-version: 3.9.6
+
+    - name: Get version
+      id: version
+      run: |
+        if [[ "${{ github.event_name }}" == "release" ]]; then
+          VERSION="${{ github.ref_name }}"
+        else
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          VERSION="${VERSION}-SNAPSHOT"
+        fi
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "version=$VERSION" >> $GITHUB_ENV
+
+    - name: Build with Maven
+      run: mvn -B clean package -DskipTests
+
+    - name: Generate native package
+      run: |
+        mvn jpackage:jpackage \
+          -Djpackage.type=${{ matrix.package_type }} \
+          -Djpackage.name=osqa \
+          -Djpackage.appVersion=${{ env.version }} \
+          -Djpackage.vendor="Samuel Owino" \
+          -Djpackage.description="Open Source Question Analyzer" \
+          -Djpackage.copyright="© 2026 Samuel Owino" \
+          -Djpackage.licenseFile="${{ github.workspace }}/LICENSE" \
+          -Djpackage.mainJar="osqa.jar" \
+          -Djpackage.mainClass="com.owino.desktop.AppGUI" \
+          -Djpackage.dest="target/jpackage"
+
+    - name: Generate checksums
+      shell: bash
+      run: |
+        cd target/jpackage
+        find . -name "*${{ matrix.package_type }}" -type f | while read file; do
+          sha256sum "$file" > "$file.sha256"
+        done
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: osqa-${{ matrix.os }}-${{ matrix.arch }}-${{ env.version }}
+        path: |
+          target/jpackage/*.${{ matrix.package_type }}
+          target/jpackage/*.sha256
+        retention-days: 30
+
+  create-release:
+    name: Create Release
+    needs: build-matrix
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+
+    - name: Generate consolidated checksums
+      run: |
+        cd artifacts
+        find . -name "*.sha256" -type f | while read file; do
+          cat "$file" >> checksums.txt
+        done
+        sort checksums.txt > checksums.sorted.txt
+        mv checksums.sorted.txt checksums.txt
+
+    - name: Upload release assets
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          artifacts/**/*
+          checksums.txt
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-summary:
+    name: Build Summary
+    needs: build-matrix
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+
+    - name: Generate build summary
+      run: |
+        echo "# Build Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Generated Binaries" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Platform | Architecture | Package Type | Size |" >> $GITHUB_STEP_SUMMARY
+        echo "|----------|-------------|--------------|------|" >> $GITHUB_STEP_SUMMARY
+        
+        cd artifacts
+        for dir in */; do
+          if [ "$dir" != "checksums.txt/" ]; then
+            platform=$(echo "$dir" | cut -d'-' -f1-2)
+            version=$(echo "$dir" | cut -d'-' -f3-)
+            
+            find "$dir" -name "*.dmg" -o -name "*.msi" -o -name "*.deb" | while read file; do
+              size=$(stat -c%s "$file" | numfmt --to=iec)
+              package_type=${file##*.}
+              echo "| $platform | $version | $package_type | $size |" >> $GITHUB_STEP_SUMMARY
+            done
+          fi
+        done
