@@ -95,7 +95,14 @@ public class FeatureFormView extends ScrollPane {
         header.setLeft(titleText);
         header.setRight(actionButtonsContainer);
         var saveButton = new Button("Save");
-        cancelButton.setOnAction(_ -> EventBus.getDefault().post(new OSQANavigationEvents.OpenDashboardEvent()));
+        cancelButton.setOnAction(_ -> {
+            var selectedProduct = productComboBox.getValue();
+            if (selectedProduct != null) {
+                EventBus.getDefault().post(new OSQANavigationEvents.OpenFeaturesListViewEvent(selectedProduct));
+            } else {
+                EventBus.getDefault().post(new OSQANavigationEvents.OpenDashboardEvent());
+            }
+        });
         productComboBox.setMinWidth(900);
         productTitleLabel.setFont(FORM_LABEL_FONT);
         featureTitleText.setFont(FORM_LABEL_FONT);
